@@ -4,7 +4,9 @@ Personal Arch package repository, built by CI and served from GitHub Pages.
 
 ## Using it
 
-Add to `/etc/pacman.conf`, above the official repositories:
+Append to the end of `/etc/pacman.conf`, after the official repositories.
+Nothing here shadows an official package, and on CachyOS the optimised `-v3`
+repos must keep precedence:
 
 ```ini
 [mtch3n]
