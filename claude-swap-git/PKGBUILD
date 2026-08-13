@@ -1,6 +1,7 @@
 # Maintainer: mtch3n
 
-pkgname=claude-swap
+pkgname=claude-swap-git
+_pkgname=claude-swap
 pkgver=0.26.0b1.r503.g0fc33ff
 pkgrel=1
 pkgdesc="Multi-account switcher for Claude Code — mtch3n fork, with Linux desktop notifications and a systemd user service"
@@ -12,12 +13,15 @@ makedepends=('git' 'python-build' 'python-installer' 'python-wheel' 'python-hatc
 checkdepends=('python-pytest' 'python-pytest-asyncio' 'python-pytest-xdist')
 optdepends=('libnotify: desktop notifications for auto-switch events'
             'systemd: run the auto-switcher in the background (cswap service)')
-replaces=('claude-swap-git')
-source=("$pkgname::git+$url.git#branch=main")
+provides=("$_pkgname=$pkgver")
+conflicts=("$_pkgname")
+# Covers the brief window this was published under the bare name.
+replaces=("$_pkgname")
+source=("$_pkgname::git+$url.git#branch=main")
 sha256sums=('SKIP')
 
 pkgver() {
-	cd "$pkgname"
+	cd "$_pkgname"
 	# Built from a branch, not a release: upstream's own version plus the
 	# commit it came from. The r-count only grows, so upgrades stay ordered
 	# across a version bump.
@@ -28,12 +32,12 @@ pkgver() {
 }
 
 build() {
-	cd "$pkgname"
+	cd "$_pkgname"
 	python -m build --wheel --no-isolation
 }
 
 check() {
-	cd "$pkgname"
+	cd "$_pkgname"
 	# __version__ comes from importlib.metadata, which finds nothing in a bare
 	# source tree, so the wheel's .dist-info has to be on PYTHONPATH or every
 	# test errors at import.
@@ -44,7 +48,7 @@ check() {
 }
 
 package() {
-	cd "$pkgname"
+	cd "$_pkgname"
 	python -m installer --destdir="$pkgdir" dist/*.whl
 	install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }

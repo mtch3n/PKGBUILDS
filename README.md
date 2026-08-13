@@ -18,7 +18,7 @@ Then:
 
 ```bash
 sudo pacman -Sy
-sudo pacman -S claude-swap
+sudo pacman -S claude-swap-git
 ```
 
 > The repository was renamed from `PKGBUILD` to `PKGBUILDS`. If you configured
@@ -29,8 +29,10 @@ sudo pacman -S claude-swap
 
 | Package | What it is |
 |---|---|
-| `claude-swap` | Multi-account switcher for Claude Code, [mtch3n fork](https://github.com/mtch3n/claude-swap) — adds Linux desktop notifications and a systemd user service. Built from `main`, so it tracks the fork rather than a release |
+| `claude-swap-git` | Multi-account switcher for Claude Code, [mtch3n fork](https://github.com/mtch3n/claude-swap) — adds Linux desktop notifications and a systemd user service. `-git` because it tracks `main`, not a release |
 | `visual-studio-code-insiders-bin` | VS Code Insiders, official binary repackaged; `pkgver` is auto-bumped hourly by CI |
+| `xps15-acpi-wifi` | XPS 15 9530 SSDT overlay: fixes Dell's CNVW `_DSM` abort and unlocks Wi-Fi 6E. Reboot to apply |
+| `flatpak-autoupdate` | systemd timer that updates system Flatpaks daily and prunes unused runtimes |
 
 ## Layout
 

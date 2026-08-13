@@ -1,0 +1,77 @@
+# Maintainer: mtchen
+# A systemd timer that keeps system Flatpaks up to date.
+#
+# Ships only its OWN package-tracked unit files under /usr/lib/systemd/system
+# (it never edits a foreign config file). The install scriptlet only enables
+# the timer — an additive, reversible action.
+#
+# Install: sudo pacman -S flatpak-autoupdate
+pkgname=flatpak-autoupdate
+pkgver=1.0.0
+# -2: renamed from mtchen-flatpak-autoupdate, so the replacement has to
+# outrank the 1.0.0-1 already installed under the old name.
+pkgrel=2
+pkgdesc="Systemd timer that auto-updates system Flatpaks daily"
+arch=('any')
+license=('MIT')
+replaces=('mtchen-flatpak-autoupdate')
+conflicts=('mtchen-flatpak-autoupdate')
+depends=('flatpak' 'systemd')
+install="${pkgname}.install"
+
+package() {
+  install -d "${pkgdir}/usr/lib/systemd/system"
+
+  # oneshot updater: update all system Flatpaks, then prune unused runtimes.
+  cat > "${pkgdir}/usr/lib/systemd/system/flatpak-update.service" <<'EOF'
+[Unit]
+Description=Update system Flatpaks
+Documentation=man:flatpak(1)
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=/var/lib/flatpak
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/flatpak update --system --noninteractive --assumeyes
+ExecStartPost=/usr/bin/flatpak uninstall --system --unused --noninteractive --assumeyes
+# Be gentle: this is background maintenance, not interactive work.
+Nice=10
+IOSchedulingClass=idle
+EOF
+  chmod 644 "${pkgdir}/usr/lib/systemd/system/flatpak-update.service"
+
+  # Daily schedule: first run shortly after boot, then every 24h after completion.
+  # Persistent catches missed runs (laptop asleep); randomized delay avoids load spikes.
+  cat > "${pkgdir}/usr/lib/systemd/system/flatpak-update.timer" <<'EOF'
+[Unit]
+Description=Daily system Flatpak update
+
+[Timer]
+OnBootSec=5min
+OnUnitInactiveSec=1d
+Persistent=true
+RandomizedDelaySec=30min
+
+[Install]
+WantedBy=timers.target
+EOF
+  chmod 644 "${pkgdir}/usr/lib/systemd/system/flatpak-update.timer"
+
+  install -d "${pkgdir}/usr/share/doc/${pkgname}"
+  cat > "${pkgdir}/usr/share/doc/${pkgname}/README.md" <<'EOF'
+# flatpak-autoupdate
+
+A systemd timer that runs `flatpak update` on system Flatpaks once a day
+(5 min after boot, then every 24h), then prunes unused runtimes.
+
+- Status:   `systemctl status flatpak-update.timer`
+- Next run: `systemctl list-timers flatpak-update.timer`
+- Run now:  `sudo systemctl start flatpak-update.service`
+- Logs:     `journalctl -u flatpak-update.service`
+
+Note: only updates SYSTEM flatpaks (run as root). Per-user (`--user`) installs
+are not touched. Removing the package disables the timer.
+EOF
+  chmod 644 "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+}

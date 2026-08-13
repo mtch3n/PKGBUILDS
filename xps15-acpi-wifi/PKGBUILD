@@ -1,0 +1,82 @@
+# Maintainer: mtchen
+# XPS 15 9530 (Intel AX211 CNVi) ACPI override: fixes Dell's CNVW/_DSM abort
+# bug and unlocks Wi-Fi 6E. The SSDT is compiled at build time and loaded via
+# mkinitcpio's acpi_override hook. Reboot to apply — overrides land at boot.
+pkgname=xps15-acpi-wifi
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="XPS15 9530 ACPI override: fix CNVW _DSM (RP28.PXSX.WIST) abort + unlock Wi-Fi 6E (6 GHz). Reboot to apply."
+arch=('any')
+license=('MIT')
+makedepends=('acpica')          # iasl, build-time only
+depends=('mkinitcpio')          # provides the acpi_override hook + regen
+# conf.d drop-in is user-editable -> emit .pacnew instead of clobbering
+backup=('etc/mkinitcpio.conf.d/20-xps15-acpi-override.conf')
+install="${pkgname}.install"
+
+build() {
+  cat > "${srcdir}/xps15-wifi.asl" <<'EOF'
+/*
+ * XPS 15 9530 (Intel AX211 CNVi Wi-Fi) — ACPI override. Two fixes:
+ *
+ * A) Dell's DSDT aborts every Wi-Fi _DSM: CNVW.IFUN calls ^^RP28.PXSX.WIST()
+ *    unguarded (ASL && does not short-circuit), but on this CNVi SKU root
+ *    ports RP25-28 are never created and CNVW.{RSTY,FLRC,BOFC,DPRS} dangle.
+ *      ACPI BIOS Error (bug): Could not resolve symbol [^^RP28.PXSX.WIST]
+ *    Stubbing RP28.PXSX.WIST and defining the four Names resolves it.
+ *
+ * B) Dell sets GNVS UHBS bit0=1 to disable 6 GHz; clearing it unlocks 6E.
+ *    Rides the same _DSM, so (A) is a prerequisite. 6 GHz is licence-exempt
+ *    in Canada (ISED RSS-248) and the AX211 is a certified 6E device.
+ *
+ * Reversible: pacman -R xps15-acpi-wifi rebuilds the initramfs clean.
+ */
+DefinitionBlock ("", "SSDT", 2, "MTCHEN", "XPSWIFI", 0x00000001)
+{
+    External (\UHBS, IntObj)
+    External (\_SB.PC00, DeviceObj)
+    External (\_SB.PC00.CNVW, DeviceObj)
+
+    Scope (\_SB.PC00)
+    {
+        Device (RP28)
+        {
+            Name (_ADR, 0x001D0003)
+            Method (_STA, 0, NotSerialized) { Return (Zero) }   // hidden from enumeration
+            Device (PXSX)
+            {
+                Name (_ADR, Zero)
+                Method (WIST, 0, Serialized) { Return (Zero) }   // matches RP01-24 on this SKU
+            }
+        }
+    }
+
+    Scope (\_SB.PC00.CNVW)
+    {
+        Name (RSTY, Zero)
+        Name (FLRC, Zero)
+        Name (BOFC, Zero)
+        Name (DPRS, Zero)
+        Method (_INI, 0, NotSerialized)
+        {
+            UHBS = Zero                       // 6 GHz unlock, set once before iwlwifi loads
+        }
+    }
+}
+EOF
+  iasl "${srcdir}/xps15-wifi.asl"
+}
+
+package() {
+  install -Dm644 "${srcdir}/xps15-wifi.aml" \
+    "${pkgdir}/usr/lib/initcpio/acpi_override/xps15-wifi.aml"
+
+  # Enable the acpi_override hook without editing the user's mkinitcpio.conf.
+  install -d "${pkgdir}/etc/mkinitcpio.conf.d"
+  printf '# Load the XPS15 Wi-Fi ACPI override (xps15-acpi-wifi package).\nHOOKS+=(acpi_override)\n' \
+    > "${pkgdir}/etc/mkinitcpio.conf.d/20-xps15-acpi-override.conf"
+
+  # Provenance: ship the ASL source + a decompile-friendly note.
+  install -Dm644 "${srcdir}/xps15-wifi.asl" \
+    "${pkgdir}/usr/share/doc/${pkgname}/xps15-wifi.asl"
+}

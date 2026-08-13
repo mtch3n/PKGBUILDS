@@ -1,0 +1,22 @@
+## install scriptlet for flatpak-autoupdate
+## Only enables/starts the timer (additive, reversible). No config-file edits.
+
+post_install() {
+  systemctl daemon-reload >/dev/null 2>&1 || true
+  systemctl enable flatpak-update.timer >/dev/null 2>&1 || true
+  # Start now if we're on a live system (no-op inside a chroot/no-systemd).
+  systemctl start flatpak-update.timer >/dev/null 2>&1 || true
+  echo ">> flatpak-update.timer enabled (first run ~5 min after boot, then daily)."
+}
+
+post_upgrade() {
+  systemctl daemon-reload >/dev/null 2>&1 || true
+}
+
+pre_remove() {
+  systemctl disable --now flatpak-update.timer >/dev/null 2>&1 || true
+}
+
+post_remove() {
+  systemctl daemon-reload >/dev/null 2>&1 || true
+}

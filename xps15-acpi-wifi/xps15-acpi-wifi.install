@@ -1,0 +1,32 @@
+_regen() {
+  echo ":: xps15-acpi-wifi: regenerating initramfs (acpi_override) + Limine entries..."
+  mkinitcpio -P
+  if command -v limine-update >/dev/null 2>&1; then
+    limine-update
+  fi
+}
+
+post_install() {
+  _regen
+  cat <<'MSG'
+==> xps15-acpi-wifi installed. REBOOT to apply the ACPI override.
+    After reboot, verify:
+      journalctl -k -b | grep -iE 'CNVW|WIST|AE_NOT_FOUND'   # expect: nothing (bug gone)
+      dmesg | grep -iE 'ACPI.*(overriding|table.*upgrade)|SSDT.*XPSWIFI'  # override loaded
+      nmcli -f SSID,FREQ,SIGNAL dev wifi list | awk 'NR==1 || $2+0>=5955' # 6 GHz SSIDs, if any AP broadcasts one
+    Rollback:
+      sudo pacman -R xps15-acpi-wifi   # rebuilds initramfs clean, then reboot
+      (or boot a Limine snapshot entry)
+MSG
+}
+
+post_upgrade() {
+  _regen
+  echo "==> xps15-acpi-wifi upgraded. REBOOT to apply."
+}
+
+post_remove() {
+  # conf.d drop-in + .aml already removed by pacman; rebuild without the override.
+  _regen
+  echo "==> xps15-acpi-wifi removed. REBOOT to fully drop the ACPI override."
+}
