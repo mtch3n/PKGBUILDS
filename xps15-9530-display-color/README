@@ -1,0 +1,35 @@
+XPS 15 9530 factory display colour profile
+==========================================
+
+Panel: LG Display LGD06B3, 1920x1200 (FHD+ IPS). NOT the 3.5K OLED option.
+
+Why this profile and not the others
+-----------------------------------
+Dell's PremierColor driver installs ~35 ICC files; only Final_ICM_* characterises
+this unit. The LGD06B3_<gamut>_<temp> set describes gamut modes Dell's Windows
+software puts the panel into, not measurements of it. Against the panel's EDID:
+
+                         red            green          blue           white
+  EDID (ground truth)    0.6504,0.3301  0.2852,0.6348  0.1445,0.0547  0.3135,0.3291
+  Final_ICM (this file)  0.6523,0.3317  0.2973,0.6080  0.1440,0.0688  0.3127,0.3290
+  LGD06B3_Native_6500    0.6579,0.3180  0.2119,0.7067  0.1476,0.0567  0.3150,0.3320
+
+White point agrees to 0.0008. Native_6500's Adobe-RGB-class green is nowhere near
+this panel's, and installing it visibly skews colour.
+
+Two gotchas when re-deriving this
+---------------------------------
+1. The families use different white-point conventions: Final_ICM stores the
+   media-relative (D65) white directly and must NOT be un-adapted via `chad`;
+   the LGD06B3_* set follows the D50-PCS convention and must be. Comparing them
+   naively makes the wrong profile look like the better match.
+2. `stat` reports 0 bytes for sysfs binary attributes. Read /sys/class/drm/*/edid
+   directly; filtering connectors by file size finds no EDID at all.
+
+What this does and does not change
+----------------------------------
+No vcgt tag, so no gamma ramp is loaded and the desktop's appearance is unchanged.
+It is a *description* of the panel, consumed by colour-managed apps (GIMP, Krita,
+darktable, Inkscape, Firefox with gfx.color_management.mode=1).
+
+Its MHC2 and DVB1 tags are Windows Advanced Color features; colord ignores them.

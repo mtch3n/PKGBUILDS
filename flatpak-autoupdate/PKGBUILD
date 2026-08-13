@@ -14,60 +14,18 @@ arch=('any')
 license=('MIT')
 depends=('flatpak' 'systemd')
 install="${pkgname}.install"
+source=('flatpak-update.service'
+        'flatpak-update.timer'
+        'README.md')
+sha256sums=('e00bb434ae0f8f74e5f4cb7fc400e4b71c5c8159ebda1816b8ab2fd794edde8e'
+            'cbbfb5d5de754813c1ef53b907fd865bfb2b7ae5984a756a9be5ce8e8e5709ce'
+            '502fab5d4554f74ff56911e15cdc362974253a0bd874745e5e2d93b4dd5db527')
 
 package() {
-  install -d "${pkgdir}/usr/lib/systemd/system"
-
-  # oneshot updater: update all system Flatpaks, then prune unused runtimes.
-  cat > "${pkgdir}/usr/lib/systemd/system/flatpak-update.service" <<'EOF'
-[Unit]
-Description=Update system Flatpaks
-Documentation=man:flatpak(1)
-Wants=network-online.target
-After=network-online.target
-ConditionPathExists=/var/lib/flatpak
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/flatpak update --system --noninteractive --assumeyes
-ExecStartPost=/usr/bin/flatpak uninstall --system --unused --noninteractive --assumeyes
-# Be gentle: this is background maintenance, not interactive work.
-Nice=10
-IOSchedulingClass=idle
-EOF
-  chmod 644 "${pkgdir}/usr/lib/systemd/system/flatpak-update.service"
-
-  # Daily schedule: first run shortly after boot, then every 24h after completion.
-  # Persistent catches missed runs (laptop asleep); randomized delay avoids load spikes.
-  cat > "${pkgdir}/usr/lib/systemd/system/flatpak-update.timer" <<'EOF'
-[Unit]
-Description=Daily system Flatpak update
-
-[Timer]
-OnBootSec=5min
-OnUnitInactiveSec=1d
-Persistent=true
-RandomizedDelaySec=30min
-
-[Install]
-WantedBy=timers.target
-EOF
-  chmod 644 "${pkgdir}/usr/lib/systemd/system/flatpak-update.timer"
-
-  install -d "${pkgdir}/usr/share/doc/${pkgname}"
-  cat > "${pkgdir}/usr/share/doc/${pkgname}/README.md" <<'EOF'
-# flatpak-autoupdate
-
-A systemd timer that runs `flatpak update` on system Flatpaks once a day
-(5 min after boot, then every 24h), then prunes unused runtimes.
-
-- Status:   `systemctl status flatpak-update.timer`
-- Next run: `systemctl list-timers flatpak-update.timer`
-- Run now:  `sudo systemctl start flatpak-update.service`
-- Logs:     `journalctl -u flatpak-update.service`
-
-Note: only updates SYSTEM flatpaks (run as root). Per-user (`--user`) installs
-are not touched. Removing the package disables the timer.
-EOF
-  chmod 644 "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+  install -Dm644 "${srcdir}/flatpak-update.service" \
+    "${pkgdir}/usr/lib/systemd/system/flatpak-update.service"
+  install -Dm644 "${srcdir}/flatpak-update.timer" \
+    "${pkgdir}/usr/lib/systemd/system/flatpak-update.timer"
+  install -Dm644 "${srcdir}/README.md" \
+    "${pkgdir}/usr/share/doc/${pkgname}/README.md"
 }
