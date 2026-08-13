@@ -20,10 +20,7 @@ sha256sums=('SKIP')
 
 pkgver() {
 	cd "$_pkgname"
-	# The fork carries no tags of its own, so `git describe` alone would fail
-	# and abort the build. Fall back to the Arch VCS convention's r<count>
-	# form, which only ever increases; if tags are pushed later, describe
-	# takes over and sorts strictly newer (verified with vercmp).
+	# The fork is tagless, so describe alone would abort the build.
 	(
 		set -o pipefail
 		git describe --long --abbrev=7 --tags 2>/dev/null |
@@ -39,18 +36,12 @@ build() {
 
 check() {
 	cd "$_pkgname"
-	# claude_swap/__init__.py resolves __version__ through
-	# importlib.metadata, which needs installed *distribution* metadata — a
-	# bare source tree has none, and every test errors at import. So install
-	# the wheel into a throwaway prefix and put it on PYTHONPATH: the
-	# .dist-info there answers the metadata lookup, while pytest's own
-	# pythonpath=src setting still exercises the source tree.
+	# __version__ comes from importlib.metadata, which finds nothing in a bare
+	# source tree, so the wheel's .dist-info has to be on PYTHONPATH or every
+	# test errors at import.
 	local _site
 	_site="$(python -c 'import site; print(site.getsitepackages()[0])')"
 	python -m installer --destdir="$srcdir/check-env" dist/*.whl
-	# The suite is hermetic — it fakes subprocess, network, and the platform
-	# keychain, and an audit hook refuses any write to a real account store —
-	# so it is safe to run unattended in a build container.
 	PYTHONPATH="$srcdir/check-env$_site" python -m pytest
 }
 

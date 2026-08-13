@@ -3,14 +3,11 @@ name: Build and Deploy Repo
 on:
   push:
     branches: [main]
-    # Flat layout: every top-level directory is a package, so anything that
-    # isn't repo scaffolding is a package change worth rebuilding.
+    # Every top-level directory is a package; the rest is scaffolding.
     paths-ignore:
       - ".github/**"
       - "README.md"
-  # A *-git package tracks a moving branch: its source changes without its
-  # PKGBUILD changing, so a push-only trigger would publish one snapshot and
-  # let it go stale forever. The daily run is what keeps the repo current.
+  # Keeps *-git packages current: their source moves without the PKGBUILD.
   schedule:
     - cron: "17 5 * * *"
   workflow_dispatch:
@@ -42,9 +39,7 @@ jobs:
           useradd -m builder
           echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
-      # Lets an unchanged package be reused instead of rebuilt, while the
-      # deployed repo still contains every package. Accumulating cache: the
-      # newest entry is restored by prefix, and this run writes back a superset.
+      # Accumulating cache: restored by prefix, written back as a superset.
       - name: Restore built-package cache
         uses: actions/cache@v4
         with:
@@ -61,10 +56,9 @@ jobs:
             [ -f "$pkgdir/PKGBUILD" ] || continue
             name="${pkgdir%/}"
 
-            # A *-git package's source moves without its directory changing, so
-            # a cached build of it is a stale snapshot by definition — those
-            # always rebuild. Everything else is keyed on its own file contents,
-            # so a heavy repack only runs when its PKGBUILD actually changed.
+            # *-git sources move without the directory changing, so a cached
+            # build of one is stale by definition; everything else is keyed on
+            # its own contents and only rebuilds when they change.
             if [[ "$name" == *-git ]]; then
               stamp=""
             else
@@ -81,15 +75,10 @@ jobs:
             rm -rf /build/pkg
             cp -r "$root/$pkgdir" /build/pkg
             chown -R builder:builder /build/pkg
-            # Subshell so makepkg gets its own cwd and the loop returns to the
-            # checkout for the next package. A bare `cd /build/pkg` + `cd /`
-            # here left cwd at / after the first package, so every later
-            # `[ -f "$pkgdir/PKGBUILD" ]` test failed and that package was
-            # silently skipped while the job still reported success.
+            # Subshell: the loop must come back to the checkout, or every
+            # package after the first is silently skipped.
             ( cd /build/pkg && sudo -u builder makepkg -s --noconfirm --skippgpcheck )
-            # No `|| true`: a package that builds no artifact is a broken
-            # package, and publishing a repo quietly missing it is worse than
-            # a red run.
+            # Deliberately no `|| true` — a missing artifact should fail the run.
             cp /build/pkg/*.pkg.tar.zst /build/repo/
             if [ -n "$stamp" ]; then
               mkdir -p "/build/cache/$name-$stamp"

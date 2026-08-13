@@ -45,16 +45,13 @@ push, daily, and on demand.
 
 Two things worth knowing before editing it:
 
-- **Unchanged packages are reused from cache, not rebuilt** — keyed on the
-  hash of the package directory. The deployed repo still contains every
-  package on every run, because dropping one from the database would
-  uninstallably break it for anyone who has it.
-- **`*-git` packages are exempt from that cache and always rebuild.** Their
-  source moves without their directory changing, so a cached build is a stale
-  snapshot by definition. This is also why the workflow runs on a schedule:
-  without it, a `-git` package would be published once and never refreshed.
+- **Unchanged packages are reused from cache**, keyed on the hash of the
+  package directory. The deployed database is still assembled from *every*
+  package — dropping one would break it for anyone who has it installed.
+- **`*-git` packages skip that cache and always rebuild**, since their source
+  moves without their directory changing. Same reason the workflow runs on a
+  schedule.
 
 `update-vscode-insiders.yml` polls Microsoft hourly, rewrites the VS Code
-Insiders `pkgver`/URL/checksums, commits, and then explicitly dispatches
-`build-and-deploy.yml` — a push made with `GITHUB_TOKEN` does not trigger other
-workflows, so without that dispatch the bump would never actually be published.
+Insiders `pkgver`/URL/checksums, commits, then dispatches `build-and-deploy.yml`
+explicitly — a `GITHUB_TOKEN` push does not trigger other workflows.
