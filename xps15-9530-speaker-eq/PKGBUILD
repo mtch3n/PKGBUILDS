@@ -3,6 +3,11 @@
 # corrects the panel speakers' response (lifts 119 Hz and the top two octaves,
 # cuts the 475-950 Hz honk).
 #
+# Uses the Smart Filters approach from alexVinarskis' XPS 9530 sound notes,
+# which also carry the CS35L41 woofer-amp kernel work this depends on:
+#   https://gist.github.com/alexVinarskis/77d55a0a0f4150576ba77e5f4241d512
+# Only the EQ lives here; the amp support is upstream in the kernel.
+#
 # Installed as a system default under /usr/share. A file of the same name in
 # ~/.config/pipewire/pipewire.conf.d/ overrides this one rather than loading
 # alongside it — so remove any hand-placed copy, or two filter chains appear.
