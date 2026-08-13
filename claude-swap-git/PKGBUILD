@@ -15,8 +15,6 @@ optdepends=('libnotify: desktop notifications for auto-switch events'
             'systemd: run the auto-switcher in the background (cswap service)')
 provides=("$_pkgname=$pkgver")
 conflicts=("$_pkgname")
-# Covers the brief window this was published under the bare name.
-replaces=("$_pkgname")
 source=("$_pkgname::git+$url.git#branch=main")
 sha256sums=('SKIP')
 

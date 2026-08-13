@@ -4,9 +4,7 @@ Personal Arch package repository, built by CI and served from GitHub Pages.
 
 ## Using it
 
-Append to the end of `/etc/pacman.conf`, after the official repositories.
-Nothing here shadows an official package, and on CachyOS the optimised `-v3`
-repos must keep precedence:
+Append to `/etc/pacman.conf`, after the official repositories:
 
 ```ini
 [mtch3n]
@@ -14,54 +12,46 @@ SigLevel = Optional TrustAll
 Server = https://mtch3n.github.io/PKGBUILDS/$arch
 ```
 
-Then:
-
 ```bash
-sudo pacman -Sy
-sudo pacman -S claude-swap-git
+sudo pacman -Syu claude-swap-git
 ```
-
-> The repository was renamed from `PKGBUILD` to `PKGBUILDS`. If you configured
-> it before that, update the `Server` line above — the old Pages URL stops
-> serving once this repo's Pages deployment moves.
 
 ## Packages
 
 | Package | What it is |
 |---|---|
-| `claude-swap-git` | Multi-account switcher for Claude Code, [mtch3n fork](https://github.com/mtch3n/claude-swap) — adds Linux desktop notifications and a systemd user service. `-git` because it tracks `main`, not a release |
-| `visual-studio-code-insiders-bin` | VS Code Insiders, official binary repackaged; `pkgver` is auto-bumped hourly by CI |
-| `xps15-9530-acpi-patch` | SSDT overlay: fixes Dell's CNVW `_DSM` abort and unlocks Wi-Fi 6E. Reboot to apply |
-| `flatpak-autoupdate` | systemd timer that updates system Flatpaks daily and prunes unused runtimes |
-| `xpsctl-git` | CLI for the Intel Arc A370M dGPU power state and Dell EC thermal profile |
-| `gnome-shell-extension-xpsctl-git` | GNOME quick-settings toggle for the dGPU (built from the same source) |
-| `xps15-9530-display-color` | Factory panel colour profile. **Not published** — Dell's `.icm` is proprietary and supplied locally, so CI skips it (`.ci-skip`); build with `makepkg -si` |
+| `claude-swap-git` | Multi-account switcher for Claude Code ([fork](https://github.com/mtch3n/claude-swap) adding desktop notifications and a systemd user service) |
+| `xpsctl-git` | CLI for the Arc A370M dGPU power state and Dell EC thermal profile |
+| `gnome-shell-extension-xpsctl-git` | GNOME quick-settings toggle for the dGPU, from the same source |
+| `xps15-9530-acpi-patch` | SSDT overlay: fixes Dell's CNVW `_DSM` abort, unlocks Wi-Fi 6E. Reboot to apply |
+| `xps15-9530-display-color` | Factory panel colour profile. Not published — see below |
+| `flatpak-autoupdate` | systemd timer: daily system Flatpak update, prunes unused runtimes |
+| `visual-studio-code-insiders-bin` | VS Code Insiders, official binary repackaged; auto-bumped hourly |
 
 ## Layout
 
-Flat: one top-level directory per package, each containing a `PKGBUILD`.
-Anything outside `.github/` and this README is treated as a package.
+One top-level directory per package. Anything outside `.github/` and this
+README is treated as one.
 
-A package containing a `.ci-skip` file is left to be built by hand — for
-sources CI cannot fetch, like a vendor blob you supply locally. The skip is
-logged in the run, so a package missing from the repo is never a mystery.
+A directory containing `.ci-skip` is built by hand instead — for sources CI
+cannot fetch, like a vendor file you supply locally. `xps15-9530-display-color`
+is the only one: Dell's `.icm` is proprietary and not committed, so build it
+on the machine with `makepkg -si` after mounting Windows read-only, or with
+the profile dropped beside the PKGBUILD.
 
-## How CI works
+## CI
 
-`build-and-deploy.yml` builds every package in an `archlinux:base-devel`
-container, assembles a `repo-add` database, and deploys it to Pages. It runs on
-push, daily, and on demand.
+`build-and-deploy.yml` builds each package in an `archlinux:base-devel`
+container, assembles the database with `repo-add`, and deploys to Pages. Runs
+on push, daily, and on demand.
 
-Two things worth knowing before editing it:
-
-- **Unchanged packages are reused from cache**, keyed on the hash of the
-  package directory. The deployed database is still assembled from *every*
-  package — dropping one would break it for anyone who has it installed.
-- **Packages with a VCS source skip that cache and always rebuild**, since
-  their source moves without their directory changing. Detected from the
-  `source=` array, not the package name. Same reason the workflow runs on a
-  schedule.
+- Unchanged packages are restored from cache, keyed on the directory's
+  contents. The database is still assembled from *every* package — dropping
+  one would break it for anyone who has it installed.
+- Packages with a VCS `source=` skip that cache and always rebuild, since
+  their source moves without the directory changing. That is also why the
+  workflow runs on a schedule.
 
 `update-vscode-insiders.yml` polls Microsoft hourly, rewrites the VS Code
-Insiders `pkgver`/URL/checksums, commits, then dispatches `build-and-deploy.yml`
+Insiders `pkgver`/URL/checksums, commits, then dispatches the build
 explicitly — a `GITHUB_TOKEN` push does not trigger other workflows.

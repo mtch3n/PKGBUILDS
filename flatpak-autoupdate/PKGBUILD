@@ -8,14 +8,10 @@
 # Install: sudo pacman -S flatpak-autoupdate
 pkgname=flatpak-autoupdate
 pkgver=1.0.0
-# -2: renamed from mtchen-flatpak-autoupdate, so the replacement has to
-# outrank the 1.0.0-1 already installed under the old name.
-pkgrel=2
+pkgrel=3
 pkgdesc="Systemd timer that auto-updates system Flatpaks daily"
 arch=('any')
 license=('MIT')
-replaces=('mtchen-flatpak-autoupdate')
-conflicts=('mtchen-flatpak-autoupdate')
 depends=('flatpak' 'systemd')
 install="${pkgname}.install"
 

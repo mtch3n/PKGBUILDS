@@ -7,15 +7,13 @@
 # The CNVW/_DSM abort fix below is additional.
 pkgname=xps15-9530-acpi-patch
 pkgver=1.0.0
-pkgrel=2
+pkgrel=3
 pkgdesc="XPS15 9530 ACPI override: fix CNVW _DSM (RP28.PXSX.WIST) abort + unlock Wi-Fi 6E (6 GHz). Reboot to apply."
 arch=('any')
 license=('MIT')
 makedepends=('acpica')          # iasl, build-time only
 depends=('mkinitcpio')          # provides the acpi_override hook + regen
 # conf.d drop-in is user-editable -> emit .pacnew instead of clobbering
-replaces=('xps15-acpi-wifi')
-conflicts=('xps15-acpi-wifi')
 backup=('etc/mkinitcpio.conf.d/20-xps15-acpi-override.conf')
 install="${pkgname}.install"
 
