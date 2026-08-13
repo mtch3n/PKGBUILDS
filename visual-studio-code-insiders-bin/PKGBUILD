@@ -29,13 +29,7 @@ source=(code-${pkgver}.desktop.in::https://raw.githubusercontent.com/microsoft/v
         ${_pkgname}-bin.sh)
 source_x86_64=(code_x64_1786598168.tar.gz::https://vscode.download.prss.microsoft.com/dbazure/download/insider/72f433c37ae15b2f1fb8e292a908964ad1673fbc/code-insider-x64-1786598168.tar.gz)
 
-sha256sums=('2f1782b30c4e040efff655fd9cf477930c5a0c81ddae27749b0cbb922c1d248e'
-            'c361efa7e02fcad759ed80d2fbab67877f33219b981578af6fffaf18aeb12d9b'
-            '3af748dd6578a1775e8eb7248ba397b7e11840df2ea6ee234ff76fee3dc306cf'
-            '4ba4e7bb90c05089a2aed7e1fbfade57f6878aebe8c3166c82dcaefc45141372')
-            'c361efa7e02fcad759ed80d2fbab67877f33219b981578af6fffaf18aeb12d9b'
-            '3af748dd6578a1775e8eb7248ba397b7e11840df2ea6ee234ff76fee3dc306cf'
-            '4ba4e7bb90c05089a2aed7e1fbfade57f6878aebe8c3166c82dcaefc45141372')
+sha256sums=('2f1782b30c4e040efff655fd9cf477930c5a0c81ddae27749b0cbb922c1d248e' 'c361efa7e02fcad759ed80d2fbab67877f33219b981578af6fffaf18aeb12d9b' '3af748dd6578a1775e8eb7248ba397b7e11840df2ea6ee234ff76fee3dc306cf' '4ba4e7bb90c05089a2aed7e1fbfade57f6878aebe8c3166c82dcaefc45141372')
 sha256sums_x86_64=('f7d146f755bc7b4910a7e5f97c29e941dc7f3fe8fd18282c9089691430cf1b89')
 
 _set_meta_info() {

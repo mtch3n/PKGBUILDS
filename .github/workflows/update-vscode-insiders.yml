@@ -77,7 +77,11 @@ jobs:
           sha_workspace=$(curl -sL "https://raw.githubusercontent.com/microsoft/vscode/master/resources/linux/code-workspace.xml" | sha256sum | cut -d' ' -f1)
           sha_launcher=$(sha256sum "$pkgdir/visual-studio-code-insiders-bin.sh" | cut -d' ' -f1)
 
-          sed -i "s|^sha256sums=.*|sha256sums=('$sha_desktop'\n            '$sha_url_handler'\n            '$sha_workspace'\n            '$sha_launcher')|" "$pkgdir/PKGBUILD"
+          # One line, deliberately. sed matches per line, so writing a
+          # multi-line array here replaced only the array's FIRST line and
+          # left the other three behind as orphans — which is a PKGBUILD that
+          # no longer sources, and it broke the build for every package.
+          sed -i "s|^sha256sums=.*|sha256sums=('$sha_desktop' '$sha_url_handler' '$sha_workspace' '$sha_launcher')|" "$pkgdir/PKGBUILD"
 
           echo "updated=true" >> "$GITHUB_OUTPUT"
           echo "new_version=$version_new" >> "$GITHUB_OUTPUT"
