@@ -56,10 +56,12 @@ jobs:
             [ -f "$pkgdir/PKGBUILD" ] || continue
             name="${pkgdir%/}"
 
-            # *-git sources move without the directory changing, so a cached
+            # VCS sources move without the directory changing, so a cached
             # build of one is stale by definition; everything else is keyed on
-            # its own contents and only rebuilds when they change.
-            if [[ "$name" == *-git ]]; then
+            # its own contents and only rebuilds when they change. Detected
+            # from the source array, not the package name — a VCS package need
+            # not be called *-git.
+            if grep -qE '^[[:space:]]*source=.*\b(git|svn|hg|bzr)\+' "$pkgdir/PKGBUILD"; then
               stamp=""
             else
               stamp="$(find "$pkgdir" -type f -exec sha256sum {} + | sort | sha256sum | cut -c1-16)"

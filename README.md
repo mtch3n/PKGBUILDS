@@ -18,7 +18,7 @@ Then:
 
 ```bash
 sudo pacman -Sy
-sudo pacman -S claude-swap-git
+sudo pacman -S claude-swap
 ```
 
 > The repository was renamed from `PKGBUILD` to `PKGBUILDS`. If you configured
@@ -29,7 +29,7 @@ sudo pacman -S claude-swap-git
 
 | Package | What it is |
 |---|---|
-| `claude-swap-git` | Multi-account switcher for Claude Code, [mtch3n fork](https://github.com/mtch3n/claude-swap) — adds Linux desktop notifications and a systemd user service |
+| `claude-swap` | Multi-account switcher for Claude Code, [mtch3n fork](https://github.com/mtch3n/claude-swap) — adds Linux desktop notifications and a systemd user service. Built from `main`, so it tracks the fork rather than a release |
 | `visual-studio-code-insiders-bin` | VS Code Insiders, official binary repackaged; `pkgver` is auto-bumped hourly by CI |
 
 ## Layout
@@ -48,8 +48,9 @@ Two things worth knowing before editing it:
 - **Unchanged packages are reused from cache**, keyed on the hash of the
   package directory. The deployed database is still assembled from *every*
   package — dropping one would break it for anyone who has it installed.
-- **`*-git` packages skip that cache and always rebuild**, since their source
-  moves without their directory changing. Same reason the workflow runs on a
+- **Packages with a VCS source skip that cache and always rebuild**, since
+  their source moves without their directory changing. Detected from the
+  `source=` array, not the package name. Same reason the workflow runs on a
   schedule.
 
 `update-vscode-insiders.yml` polls Microsoft hourly, rewrites the VS Code
