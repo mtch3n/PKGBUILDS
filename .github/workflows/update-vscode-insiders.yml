@@ -5,6 +5,14 @@ on:
   schedule:
     - cron: "12 * * * *"
 
+# GITHUB_TOKEN defaults to read-only here, which is exactly why the commit
+# step failed with "Permission to mtch3n/... denied to github-actions[bot]"
+# (403). Declaring scopes in the workflow grants them for this workflow only.
+# `actions: write` is for the build dispatch at the end — see that step.
+permissions:
+  contents: write
+  actions: write
+
 concurrency:
   group: update-vscode-insiders
   cancel-in-progress: false
@@ -19,7 +27,7 @@ jobs:
       - name: Check for new version
         id: check
         run: |
-          pkgdir="packages/visual-studio-code-insiders-bin"
+          pkgdir="visual-studio-code-insiders-bin"
           version_current=$(awk '/^pkgver=/ {print $0}' "$pkgdir/PKGBUILD" | cut -d= -f2)
 
           if [ -z "$version_current" ]; then
@@ -83,6 +91,18 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add packages/visual-studio-code-insiders-bin/PKGBUILD
+          git add visual-studio-code-insiders-bin/PKGBUILD
           git commit -m "visual-studio-code-insiders-bin: update to $NEW_VERSION"
           git push
+
+      - name: Trigger a rebuild
+        if: steps.check.outputs.updated == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # A push made with GITHUB_TOKEN deliberately does NOT trigger other
+          # workflows (GitHub's recursion guard), so the commit above would
+          # otherwise bump the PKGBUILD and never publish it — the new version
+          # would sit unbuilt until the next daily run. Dispatching the build
+          # explicitly is what closes that gap, and needs `actions: write`.
+          gh workflow run build-and-deploy.yml --ref "$GITHUB_REF_NAME"

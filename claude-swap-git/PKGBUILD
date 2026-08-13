@@ -1,0 +1,61 @@
+# Maintainer: mtch3n
+
+pkgname=claude-swap-git
+_pkgname=claude-swap
+pkgver=0.r503.g0fc33ff
+pkgrel=1
+pkgdesc="Multi-account switcher for Claude Code — mtch3n fork, with Linux desktop notifications and a systemd user service"
+arch=('any')
+url="https://github.com/mtch3n/claude-swap"
+license=('MIT')
+depends=('python' 'python-textual' 'python-truststore')
+makedepends=('git' 'python-build' 'python-installer' 'python-wheel' 'python-hatchling')
+checkdepends=('python-pytest' 'python-pytest-asyncio' 'python-pytest-xdist')
+optdepends=('libnotify: desktop notifications for auto-switch events'
+            'systemd: run the auto-switcher in the background (cswap service)')
+provides=("$_pkgname=$pkgver")
+conflicts=("$_pkgname")
+source=("$_pkgname::git+$url.git#branch=main")
+sha256sums=('SKIP')
+
+pkgver() {
+	cd "$_pkgname"
+	# The fork carries no tags of its own, so `git describe` alone would fail
+	# and abort the build. Fall back to the Arch VCS convention's r<count>
+	# form, which only ever increases; if tags are pushed later, describe
+	# takes over and sorts strictly newer (verified with vercmp).
+	(
+		set -o pipefail
+		git describe --long --abbrev=7 --tags 2>/dev/null |
+			sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+			printf "0.r%s.g%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+	)
+}
+
+build() {
+	cd "$_pkgname"
+	python -m build --wheel --no-isolation
+}
+
+check() {
+	cd "$_pkgname"
+	# claude_swap/__init__.py resolves __version__ through
+	# importlib.metadata, which needs installed *distribution* metadata — a
+	# bare source tree has none, and every test errors at import. So install
+	# the wheel into a throwaway prefix and put it on PYTHONPATH: the
+	# .dist-info there answers the metadata lookup, while pytest's own
+	# pythonpath=src setting still exercises the source tree.
+	local _site
+	_site="$(python -c 'import site; print(site.getsitepackages()[0])')"
+	python -m installer --destdir="$srcdir/check-env" dist/*.whl
+	# The suite is hermetic — it fakes subprocess, network, and the platform
+	# keychain, and an audit hook refuses any write to a real account store —
+	# so it is safe to run unattended in a build container.
+	PYTHONPATH="$srcdir/check-env$_site" python -m pytest
+}
+
+package() {
+	cd "$_pkgname"
+	python -m installer --destdir="$pkgdir" dist/*.whl
+	install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
