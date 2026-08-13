@@ -1,0 +1,2 @@
+Dell's .icm is proprietary and not committed, so this package cannot be
+built in CI. Build it on the machine: makepkg -si

@@ -1,0 +1,38 @@
+_hint() {
+  cat <<'MSG'
+==> xps15-display-color: factory ICC installed to
+      /usr/share/color/icc/xps15-display-color/xps15-9530-lgd06b3-factory.icc
+
+    colord scans that directory and auto-attaches the profile to the internal panel
+    by EDID md5 (03f8beceddb5ad49941b8d45e90c45a3). No manual binding needed.
+
+    Verify (as your normal user, not root):
+      colormgr get-devices | grep -A6 '0x06b3'          # profile listed on the panel
+      colormgr get-profiles | grep -B4 xps15-display    # DATA_source=calib present
+
+    If a stale per-user copy exists it will shadow this one — remove it and let the
+    packaged profile take over:
+      rm -f ~/.local/share/icc/Dell-XPS15-9530-LGD06B3-factory.icc
+      systemctl --user restart xdg-desktop-portal 2>/dev/null; sudo systemctl restart colord
+
+    Note: the profile carries no vcgt, so the desktop's appearance does not change.
+    It is consumed by colour-managed apps only (GIMP, Krita, darktable, Inkscape,
+    Firefox with gfx.color_management.mode=1). See:
+      /usr/share/doc/xps15-display-color/README
+
+    Rollback:
+      sudo pacman -R xps15-display-color
+MSG
+}
+
+post_install() { _hint; }
+
+post_upgrade() { _hint; }
+
+post_remove() {
+  cat <<'MSG'
+==> xps15-display-color removed. colord falls back to the EDID-derived profile
+    that mutter generates automatically. Restart colord to drop it immediately:
+      sudo systemctl restart colord
+MSG
+}

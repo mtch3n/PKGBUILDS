@@ -1,0 +1,130 @@
+# Maintainer: mtchen
+# XPS 15 9530 factory display colour profile (LG Display LGD06B3, 1920x1200),
+# tagged so colord auto-attaches it instead of mutter's EDID-derived guess.
+#
+# Dell's .icm is proprietary and deliberately NOT committed, so CI skips this
+# package (.ci-skip) — build it on the machine with `makepkg -si` after either
+# mounting Windows read-only:
+#   sudo mount -t ntfs3 -o ro,noatime /dev/nvme0n1p4 /mnt/win
+# or dropping the .icm beside this PKGBUILD (gitignored).
+pkgname=xps15-display-color
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="XPS15 9530 factory display colour profile (LGD06B3 FHD+ panel), auto-attached via colord"
+arch=('any')
+license=('LicenseRef-Dell-proprietary')
+depends=('colord')          # provides the ICC scan dir + consumes the metadata
+makedepends=('colord')      # cd-fix-profile
+install="${pkgname}.install"
+
+_icm='Final_ICM_Dell_XPS_15_9530_1920x1200_LGD06B3.icm'
+_icm_sha256='da5d907ee69f9c6510e7c80c795b727d6565d1a0a57b26f5ce0db21072e8126f'
+_win_color_dir="${XPS15_WIN_COLOR_DIR:-/mnt/win/Windows/System32/spool/drivers/color}"
+
+_icc='xps15-9530-lgd06b3-factory.icc'
+
+# The panel colord must match this profile to. Verified on this machine:
+#   md5sum /sys/class/drm/card1-eDP-1/edid  ->  03f8beceddb5ad49941b8d45e90c45a3
+# colord keys automatic profile->display assignment off exactly this value.
+_edid_md5='03f8beceddb5ad49941b8d45e90c45a3'
+
+prepare() {
+  local _found
+  if [[ -f "${startdir}/${_icm}" ]]; then
+    _found="${startdir}/${_icm}"
+  elif [[ -f "${_win_color_dir}/${_icm}" ]]; then
+    _found="${_win_color_dir}/${_icm}"
+  else
+    echo "ERROR: ${_icm} not found." >&2
+    echo "  Mount Windows read-only and retry:" >&2
+    echo "    sudo mount -t ntfs3 -o ro,noatime /dev/nvme0n1p4 /mnt/win" >&2
+    echo "  ...or place the file beside this PKGBUILD." >&2
+    echo "  Override the search dir with XPS15_WIN_COLOR_DIR=/path" >&2
+    return 1
+  fi
+
+  install -Dm644 "${_found}" "${srcdir}/${_icm}"
+  # source=() cannot carry the checksum here, so verify it explicitly: a
+  # different Dell profile would install fine and silently mis-describe the panel.
+  echo "${_icm_sha256}  ${srcdir}/${_icm}" | sha256sum -c -
+}
+
+build() {
+  cd "${srcdir}"
+  cp "${_icm}" "${_icc}"
+
+  # NOTE argument order: cd-fix-profile takes the FILE first, then the subcommand.
+  # (`cd-fix-profile md-init foo.icc` tries to open "md-init" as the profile.)
+
+  # md-init creates the metadata dict; without it md-add has nothing to write into.
+  cd-fix-profile "${_icc}" md-init
+
+  # The auto-attach key. colord scans /usr/share/color/icc recursively and binds any
+  # profile whose EDID_md5 matches a connected display.
+  cd-fix-profile "${_icc}" md-add EDID_md5 "${_edid_md5}"
+  cd-fix-profile "${_icc}" md-add EDID_manufacturer 'LG Display'
+  cd-fix-profile "${_icc}" md-add EDID_model '0x06b3'
+
+  # DATA_source=calib marks this as a real characterisation. mutter's EDID-derived
+  # profile carries DATA_source=edid, and colord ranks calib above edid — which is
+  # what makes this one win as the default rather than merely being available.
+  cd-fix-profile "${_icc}" md-add DATA_source 'calib'
+
+  cd-fix-profile "${_icc}" set-description 'Dell XPS 15 9530 - factory (LGD06B3 FHD+)'
+  cd-fix-profile "${_icc}" set-model 'LGD06B3 1920x1200'
+  cd-fix-profile "${_icc}" set-manufacturer 'Dell Inc.'
+
+  # ICC stores dict keys as UTF-16BE, so grepping the binary never matches even
+  # when the tag is present — dump it. A silently unmodified profile would
+  # install fine and simply never auto-attach.
+  if ! cd-iccdump "${_icc}" | grep -q "${_edid_md5}"; then
+    echo "ERROR: metadata injection failed - EDID_md5 not present in ${_icc}" >&2
+    return 1
+  fi
+}
+
+package() {
+  install -Dm644 "${srcdir}/${_icc}" \
+    "${pkgdir}/usr/share/color/icc/${pkgname}/${_icc}"
+
+  install -Dm644 "${srcdir}/${_icm}" \
+    "${pkgdir}/usr/share/doc/${pkgname}/${_icm}"
+
+  install -Dm644 /dev/stdin "${pkgdir}/usr/share/doc/${pkgname}/README" <<'EOF'
+XPS 15 9530 factory display colour profile
+==========================================
+
+Panel: LG Display LGD06B3, 1920x1200 (FHD+ IPS). NOT the 3.5K OLED option.
+
+Why this profile and not the others
+-----------------------------------
+Dell's PremierColor driver installs ~35 ICC files; only Final_ICM_* characterises
+this unit. The LGD06B3_<gamut>_<temp> set describes gamut modes Dell's Windows
+software puts the panel into, not measurements of it. Against the panel's EDID:
+
+                         red            green          blue           white
+  EDID (ground truth)    0.6504,0.3301  0.2852,0.6348  0.1445,0.0547  0.3135,0.3291
+  Final_ICM (this file)  0.6523,0.3317  0.2973,0.6080  0.1440,0.0688  0.3127,0.3290
+  LGD06B3_Native_6500    0.6579,0.3180  0.2119,0.7067  0.1476,0.0567  0.3150,0.3320
+
+White point agrees to 0.0008. Native_6500's Adobe-RGB-class green is nowhere near
+this panel's, and installing it visibly skews colour.
+
+Two gotchas when re-deriving this
+---------------------------------
+1. The families use different white-point conventions: Final_ICM stores the
+   media-relative (D65) white directly and must NOT be un-adapted via `chad`;
+   the LGD06B3_* set follows the D50-PCS convention and must be. Comparing them
+   naively makes the wrong profile look like the better match.
+2. `stat` reports 0 bytes for sysfs binary attributes. Read /sys/class/drm/*/edid
+   directly; filtering connectors by file size finds no EDID at all.
+
+What this does and does not change
+----------------------------------
+No vcgt tag, so no gamma ramp is loaded and the desktop's appearance is unchanged.
+It is a *description* of the panel, consumed by colour-managed apps (GIMP, Krita,
+darktable, Inkscape, Firefox with gfx.color_management.mode=1).
+
+Its MHC2 and DVB1 tags are Windows Advanced Color features; colord ignores them.
+EOF
+}

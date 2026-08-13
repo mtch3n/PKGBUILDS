@@ -31,13 +31,18 @@ sudo pacman -S claude-swap-git
 |---|---|
 | `claude-swap-git` | Multi-account switcher for Claude Code, [mtch3n fork](https://github.com/mtch3n/claude-swap) — adds Linux desktop notifications and a systemd user service. `-git` because it tracks `main`, not a release |
 | `visual-studio-code-insiders-bin` | VS Code Insiders, official binary repackaged; `pkgver` is auto-bumped hourly by CI |
-| `xps15-acpi-wifi` | XPS 15 9530 SSDT overlay: fixes Dell's CNVW `_DSM` abort and unlocks Wi-Fi 6E. Reboot to apply |
+| `xps15-9530-acpi-patch` | SSDT overlay: fixes Dell's CNVW `_DSM` abort and unlocks Wi-Fi 6E. Reboot to apply |
 | `flatpak-autoupdate` | systemd timer that updates system Flatpaks daily and prunes unused runtimes |
+| `xps15-display-color` | Factory panel colour profile. **Not published** — Dell's `.icm` is proprietary and supplied locally, so CI skips it (`.ci-skip`); build with `makepkg -si` |
 
 ## Layout
 
 Flat: one top-level directory per package, each containing a `PKGBUILD`.
 Anything outside `.github/` and this README is treated as a package.
+
+A package containing a `.ci-skip` file is left to be built by hand — for
+sources CI cannot fetch, like a vendor blob you supply locally. The skip is
+logged in the run, so a package missing from the repo is never a mystery.
 
 ## How CI works
 

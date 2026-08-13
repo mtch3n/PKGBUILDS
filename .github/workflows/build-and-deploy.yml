@@ -56,6 +56,14 @@ jobs:
             [ -f "$pkgdir/PKGBUILD" ] || continue
             name="${pkgdir%/}"
 
+            # Opt out: a package whose source cannot be fetched in CI (vendor
+            # blob supplied locally). Announced, not silent — a package missing
+            # from the repo should never be a mystery.
+            if [ -f "$pkgdir/.ci-skip" ]; then
+              echo "::notice::skipping $name — $(head -1 "$pkgdir/.ci-skip")"
+              continue
+            fi
+
             # VCS sources move without the directory changing, so a cached
             # build of one is stale by definition; everything else is keyed on
             # its own contents and only rebuilds when they change. Detected
