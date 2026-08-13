@@ -1,4 +1,4 @@
-# Maintainer: mtchen
+# Maintainer: mtch3n
 # XPS 15 9530 factory display colour profile (LG Display LGD06B3, 1920x1200),
 # tagged so colord auto-attaches it instead of mutter's EDID-derived guess.
 #
@@ -7,7 +7,7 @@
 # mounting Windows read-only:
 #   sudo mount -t ntfs3 -o ro,noatime /dev/nvme0n1p4 /mnt/win
 # or dropping the .icm beside this PKGBUILD (gitignored).
-pkgname=xps15-display-color
+pkgname=xps15-9530-display-color
 pkgver=1.0.0
 pkgrel=1
 pkgdesc="XPS15 9530 factory display colour profile (LGD06B3 FHD+ panel), auto-attached via colord"

@@ -33,7 +33,9 @@ sudo pacman -S claude-swap-git
 | `visual-studio-code-insiders-bin` | VS Code Insiders, official binary repackaged; `pkgver` is auto-bumped hourly by CI |
 | `xps15-9530-acpi-patch` | SSDT overlay: fixes Dell's CNVW `_DSM` abort and unlocks Wi-Fi 6E. Reboot to apply |
 | `flatpak-autoupdate` | systemd timer that updates system Flatpaks daily and prunes unused runtimes |
-| `xps15-display-color` | Factory panel colour profile. **Not published** — Dell's `.icm` is proprietary and supplied locally, so CI skips it (`.ci-skip`); build with `makepkg -si` |
+| `xpsctl-git` | CLI for the Intel Arc A370M dGPU power state and Dell EC thermal profile |
+| `gnome-shell-extension-xpsctl-git` | GNOME quick-settings toggle for the dGPU (built from the same source) |
+| `xps15-9530-display-color` | Factory panel colour profile. **Not published** — Dell's `.icm` is proprietary and supplied locally, so CI skips it (`.ci-skip`); build with `makepkg -si` |
 
 ## Layout
 

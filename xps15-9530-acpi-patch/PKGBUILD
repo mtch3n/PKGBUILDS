@@ -1,4 +1,4 @@
-# Maintainer: mtchen
+# Maintainer: mtch3n
 # XPS 15 9530 (Intel AX211 CNVi) ACPI override, compiled at build time and
 # loaded via mkinitcpio's acpi_override hook. Reboot to apply.
 #
@@ -30,7 +30,7 @@ build() {
  * B) Dell sets UHBS bit0=1 to disable 6 GHz; clearing it unlocks 6E. Rides
  *    the same _DSM, so (A) is a prerequisite.
  */
-DefinitionBlock ("", "SSDT", 2, "MTCHEN", "XPSWIFI", 0x00000001)
+DefinitionBlock ("", "SSDT", 2, "XPS15", "XPSWIFI", 0x00000001)
 {
     External (\UHBS, IntObj)
     External (\_SB.PC00, DeviceObj)

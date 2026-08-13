@@ -1,0 +1,74 @@
+# Maintainer: mtch3n
+# Split package: the Rust CLI and the GNOME Shell extension that drives it,
+# both from https://github.com/mtch3n/xpsctl (tagless, so -git).
+
+pkgbase=xpsctl-git
+pkgname=('xpsctl-git' 'gnome-shell-extension-xpsctl-git')
+pkgver=0.2.0.r5.g29a1283
+pkgrel=1
+arch=('x86_64')
+url="https://github.com/mtch3n/xpsctl"
+license=('MIT')
+makedepends=('git' 'cargo')
+# Cargo already strips the release binary, so makepkg's default debug option
+# would only publish an empty -debug package into the repo.
+options=('!debug')
+source=("xpsctl::git+$url.git#branch=main")
+sha256sums=('SKIP')
+
+pkgver() {
+	cd xpsctl
+	local _ver
+	_ver="$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -1)"
+	printf "%s.r%s.g%s" "${_ver:-0}" \
+		"$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+}
+
+prepare() {
+	cd xpsctl
+	cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+	cd xpsctl
+	export RUSTUP_TOOLCHAIN=stable
+	export CARGO_TARGET_DIR=target
+	cargo build --frozen --release
+}
+
+package_xpsctl-git() {
+	pkgdesc="Control the Intel Arc A370M dGPU power state and the Dell EC thermal profile on the XPS 15 9530"
+	depends=('gcc-libs' 'glibc' 'systemd')   # systemd: busctl, for the power-profile path
+	optdepends=('polkit: run the privileged subcommands via pkexec'
+	            'tlp: power profiles via tlp-pd')
+	provides=("xpsctl=$pkgver")
+	conflicts=('xpsctl')
+
+	cd xpsctl
+	install -Dm755 target/release/xpsctl "$pkgdir/usr/bin/xpsctl"
+	install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+	install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+}
+
+package_gnome-shell-extension-xpsctl-git() {
+	pkgdesc="GNOME Shell quick-settings toggle for the Intel Arc A370M dGPU on the XPS 15 9530"
+	arch=('any')
+	depends=('gnome-shell' 'xpsctl' 'polkit')
+	provides=("gnome-shell-extension-xpsctl=$pkgver")
+	conflicts=('gnome-shell-extension-xpsctl')
+
+	local _uuid='xpsctl@mtch3n'
+	cd "xpsctl/gnome-extension/$_uuid"
+
+	# The extension pkexecs a FIXED absolute path on purpose: resolving it from
+	# $PATH would let a user-writable PATH entry run as root. Upstream hardcodes
+	# the manual-install location, but a package must not own /usr/local — so
+	# repoint it at where xpsctl-git actually installs the binary.
+	sed -i "s|^const XPSCTL = '/usr/local/bin/xpsctl';|const XPSCTL = '/usr/bin/xpsctl';|" extension.js
+	grep -q "^const XPSCTL = '/usr/bin/xpsctl';" extension.js  # fail loudly if upstream moves it
+
+	install -d "$pkgdir/usr/share/gnome-shell/extensions/$_uuid"
+	install -Dm644 extension.js metadata.json stylesheet.css \
+		-t "$pkgdir/usr/share/gnome-shell/extensions/$_uuid"
+	install -Dm644 "$srcdir/xpsctl/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

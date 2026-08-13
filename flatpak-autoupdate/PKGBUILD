@@ -1,4 +1,4 @@
-# Maintainer: mtchen
+# Maintainer: mtch3n
 # A systemd timer that keeps system Flatpaks up to date.
 #
 # Ships only its OWN package-tracked unit files under /usr/lib/systemd/system
