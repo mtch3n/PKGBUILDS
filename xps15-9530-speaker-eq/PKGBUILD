@@ -1,0 +1,22 @@
+# Maintainer: mtch3n
+# XPS 15 9530 internal-speaker EQ: an 8-band PipeWire filter-chain sink that
+# corrects the panel speakers' response (lifts 119 Hz and the top two octaves,
+# cuts the 475-950 Hz honk).
+#
+# Installed as a system default under /usr/share. A file of the same name in
+# ~/.config/pipewire/pipewire.conf.d/ overrides this one rather than loading
+# alongside it — so remove any hand-placed copy, or two filter chains appear.
+pkgname=xps15-9530-speaker-eq
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="PipeWire equaliser sink for the XPS 15 9530 internal speakers"
+arch=('any')
+license=('MIT')
+depends=('pipewire')
+source=('sink-eq6.conf')
+sha256sums=('72778a1a99165616bd28a4333d3ed1541338de6ee0c0207686d4aa7acd449ab0')
+
+package() {
+  install -Dm644 "${srcdir}/sink-eq6.conf" \
+    "${pkgdir}/usr/share/pipewire/pipewire.conf.d/sink-eq6.conf"
+}

@@ -24,6 +24,7 @@ sudo pacman -Syu claude-swap-git
 | `xpsctl-git` | CLI for the Arc A370M dGPU power state and Dell EC thermal profile |
 | `gnome-shell-extension-xpsctl-git` | GNOME quick-settings toggle for the dGPU, from the same source |
 | `xps15-9530-acpi-patch` | SSDT overlay: fixes Dell's CNVW `_DSM` abort, unlocks Wi-Fi 6E. Reboot to apply |
+| `xps15-9530-speaker-eq` | PipeWire equaliser sink for the internal speakers |
 | `xps15-9530-display-color` | Factory panel colour profile. Not published — see below |
 | `flatpak-autoupdate` | systemd timer: daily system Flatpak update, prunes unused runtimes |
 | `visual-studio-code-insiders-bin` | VS Code Insiders, official binary repackaged; auto-bumped hourly |
