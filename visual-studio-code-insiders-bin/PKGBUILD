@@ -3,7 +3,7 @@
 
 pkgname=visual-studio-code-insiders-bin
 _pkgname=visual-studio-code-insiders
-pkgver=1789971038
+pkgver=1790006951
 pkgrel=1
 pkgdesc="Visual Studio Code Insiders (vscode): Editor for building and debugging modern web and cloud applications (official binary version)"
 arch=('x86_64')
@@ -27,10 +27,10 @@ source=(code-${pkgver}.desktop.in::https://raw.githubusercontent.com/microsoft/v
         code-${pkgver}-url-handler.desktop.in::https://raw.githubusercontent.com/microsoft/vscode/master/resources/linux/code-url-handler.desktop
         code-${pkgver}-workspace.xml.in::https://raw.githubusercontent.com/microsoft/vscode/master/resources/linux/code-workspace.xml
         ${_pkgname}-bin.sh)
-source_x86_64=(code_x64_1789971038.tar.gz::https://vscode.download.prss.microsoft.com/dbazure/download/insider/c0f6c8cd52aeceb78b91631bce1b37d161a93d3f/code-insider-x64-1789971038.tar.gz)
+source_x86_64=(code_x64_1790006951.tar.gz::https://vscode.download.prss.microsoft.com/dbazure/download/insider/92e4d1b6124d662396f19665be324cbb83eabe83/code-insider-x64-1790006951.tar.gz)
 
 sha256sums=('2b36d3a8c70fcead5258dd0855be0782305b23a00448f0eef11ee4ea462193a0' 'c361efa7e02fcad759ed80d2fbab67877f33219b981578af6fffaf18aeb12d9b' '3af748dd6578a1775e8eb7248ba397b7e11840df2ea6ee234ff76fee3dc306cf' '4ba4e7bb90c05089a2aed7e1fbfade57f6878aebe8c3166c82dcaefc45141372')
-sha256sums_x86_64=('99c3c5b81eefdf8944f04f59678c33c5c28e0b3145d0a0eb56729584589a8540')
+sha256sums_x86_64=('ffdd57d7185549e0ab9d9a28812255d82aed6b028536ccc7fd7fc0cd91e4bfb1')
 
 _set_meta_info() {
   sed 's/@@NAME_LONG@@/Visual Studio Code Insiders/g' "$1" |\
