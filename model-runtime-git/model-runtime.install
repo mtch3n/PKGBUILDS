@@ -1,0 +1,10 @@
+post_install() {
+	echo "Download a model and start the service, as your user:"
+	echo "  model-runtime pull pii"
+	echo "  systemctl --user enable --now model-runtime"
+}
+
+post_upgrade() {
+	echo "Restart the service to run the new version:"
+	echo "  systemctl --user restart model-runtime"
+}

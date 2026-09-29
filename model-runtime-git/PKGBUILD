@@ -1,0 +1,50 @@
+# Maintainer: mtch3n
+
+pkgname=model-runtime-git
+_pkgname=model-runtime
+pkgver=0.1.0.r1.g19eb648
+pkgrel=1
+pkgdesc="Local models for other programs, over a Unix socket: PII detection with GLiNER2"
+arch=('x86_64')
+url="https://github.com/mtch3n/model-runtime"
+license=('MIT')
+# Loaded at run time, not linked: any of onnxruntime-cpu, -cuda or -rocm.
+depends=('gcc-libs' 'glibc' 'onnxruntime')
+makedepends=('git' 'cargo')
+provides=("$_pkgname=$pkgver")
+conflicts=("$_pkgname")
+# Cargo already strips the release binary, so makepkg's default debug option
+# would only publish an empty -debug package into the repo. makepkg's LTO turns
+# ring's C code into GCC bitcode, which Rust's linker can't read.
+options=('!debug' '!lto')
+install=model-runtime.install
+source=("$_pkgname::git+$url.git#branch=main")
+sha256sums=('SKIP')
+
+pkgver() {
+	cd "$_pkgname"
+	local _ver
+	_ver="$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -1)"
+	printf "%s.r%s.g%s" "${_ver:-0}" \
+		"$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+}
+
+prepare() {
+	cd "$_pkgname"
+	cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+	cd "$_pkgname"
+	export RUSTUP_TOOLCHAIN=stable
+	export CARGO_TARGET_DIR=target
+	cargo build --frozen --release
+}
+
+package() {
+	cd "$_pkgname"
+	install -Dm755 target/release/model-runtime "$pkgdir/usr/bin/model-runtime"
+	install -Dm644 dist/model-runtime.service "$pkgdir/usr/lib/systemd/user/model-runtime.service"
+	install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+	install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+}
