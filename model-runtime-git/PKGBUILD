@@ -2,9 +2,9 @@
 
 pkgname=model-runtime-git
 _pkgname=model-runtime
-pkgver=0.1.0.r1.g19eb648
+pkgver=0.1.0.r2.g275a84b
 pkgrel=1
-pkgdesc="Local models for other programs, over a Unix socket: PII detection with GLiNER2"
+pkgdesc="Local models for other programs, over a Unix socket: PII detection with GLiNER2, and a tray icon"
 arch=('x86_64')
 url="https://github.com/mtch3n/model-runtime"
 license=('MIT')
@@ -44,7 +44,8 @@ build() {
 package() {
 	cd "$_pkgname"
 	install -Dm755 target/release/model-runtime "$pkgdir/usr/bin/model-runtime"
-	install -Dm644 dist/model-runtime.service "$pkgdir/usr/lib/systemd/user/model-runtime.service"
+	install -Dm644 dist/model-runtime.service dist/model-runtime-tray.service \
+		-t "$pkgdir/usr/lib/systemd/user"
 	install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 	install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
 }

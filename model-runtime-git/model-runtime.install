@@ -2,9 +2,13 @@ post_install() {
 	echo "Download a model and start the service, as your user:"
 	echo "  model-runtime pull pii"
 	echo "  systemctl --user enable --now model-runtime"
+	echo "And for a tray icon showing what it's doing:"
+	echo "  systemctl --user enable --now model-runtime-tray"
 }
 
 post_upgrade() {
 	echo "Restart the service to run the new version:"
 	echo "  systemctl --user restart model-runtime"
+	echo "A tray icon is available too:"
+	echo "  systemctl --user enable --now model-runtime-tray"
 }
