@@ -26,7 +26,7 @@ sudo pacman -Syu claude-swap-git
 | `xps15-9530-acpi-patch` | SSDT overlay: fixes Dell's CNVW `_DSM` abort, unlocks Wi-Fi 6E. Reboot to apply |
 | `xps15-9530-speaker-eq` | PipeWire equaliser sink for the internal speakers |
 | `xps15-9530-display-color` | Factory panel colour profile. Not published — see below |
-| `model-runtime-git` | Local models for other programs over a Unix socket, for PII detection ([source](https://github.com/mtch3n/model-runtime)); a sandboxed systemd user service with no network access |
+| `model-runtime-git` | Local models for other programs over a Unix socket, for PII detection and chat with Gemma 4 ([source](https://github.com/mtch3n/model-runtime)); a sandboxed systemd user service with no network access |
 | `flatpak-autoupdate` | systemd timer: daily system Flatpak update, prunes unused runtimes |
 | `visual-studio-code-insiders-bin` | VS Code Insiders, official binary repackaged; auto-bumped hourly |
 

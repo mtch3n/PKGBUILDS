@@ -2,15 +2,16 @@
 
 pkgname=model-runtime-git
 _pkgname=model-runtime
-pkgver=0.1.0.r2.g275a84b
+pkgver=0.2.0.r3.g64f3272
 pkgrel=1
-pkgdesc="Local models for other programs, over a Unix socket: PII detection with GLiNER2, and a tray icon"
+pkgdesc="Local models for other programs, over a Unix socket: PII detection with GLiNER2, chat with Gemma 4, and a tray icon"
 arch=('x86_64')
 url="https://github.com/mtch3n/model-runtime"
 license=('MIT')
 # Loaded at run time, not linked: any of onnxruntime-cpu, -cuda or -rocm.
 depends=('gcc-libs' 'glibc' 'onnxruntime')
-makedepends=('git' 'cargo')
+# llama.cpp is built in: cmake builds it, bindgen needs libclang.
+makedepends=('git' 'cargo' 'cmake' 'clang')
 provides=("$_pkgname=$pkgver")
 conflicts=("$_pkgname")
 # Cargo already strips the release binary, so makepkg's default debug option
